@@ -17,6 +17,7 @@
 
 MainWindow::~MainWindow() { delete ui; }
 
+//--------------------------------------------------------------------------------------
 MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::MainWindow )
 {
     ui->setupUi( this );
@@ -70,25 +71,29 @@ void MainWindow::on_mainAddButton_clicked()
 
     if ( ok && !text.isEmpty() )
     {
+        // Make key
+        int key = m_appStateData->listCategories->count() > 0 ? m_appStateData->listCategories->lastKey() + 1 : 0;
+
         // Add to category data list
         CategoryData *newCategory = new CategoryData();
         newCategory->name = text;
-        m_appStateData->listCategories->append( newCategory );
+        m_appStateData->listCategories->insert( key, newCategory );
 
         // Add to UI list
         QListWidgetItem *newItem = new QListWidgetItem();
         newItem->setText( text );
-        newItem->setData( Qt::UserRole, m_appStateData->listCategories->count() - 1 );
+        newItem->setData( Qt::UserRole, m_appStateData->listCategories->lastKey() );
         ui_mainCatListWidget->addItem( newItem );
 
-        qDebug() << "Adding new category:" << text << "-" << m_appStateData->listCategories->count() - 1;
+        qDebug() << "Adding new category:" << text << "-" << m_appStateData->listCategories->lastKey();
     }
 }
 
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_mainRemoveButton_clicked()
 {
-    if ( ui_mainCatListWidget->currentRow() > 0 )
+    if ( ui_mainCatListWidget->count() <= 0 )
         return;
 
     qDebug() << "on_mainRemoveButton_clicked():" << ui_mainCatListWidget->currentIndex().row();
@@ -96,7 +101,8 @@ void MainWindow::on_mainRemoveButton_clicked()
     QString removedCategory = ui_mainCatListWidget->currentItem()->text();
 
     // Remove from app data
-    m_appStateData->listCategories->removeAt( ui_mainCatListWidget->currentItem()->data( Qt::UserRole ).toInt() );
+    QListWidgetItem* removedItem = ui_mainCatListWidget->currentItem();
+    m_appStateData->listCategories->remove( removedItem->data( Qt::UserRole ).toInt() );
 
     // Find all images with that category and clear their category
     for ( int i = 0; i < m_appStateData->listImageData->count(); i++ )
@@ -106,14 +112,19 @@ void MainWindow::on_mainRemoveButton_clicked()
             imgData->category = "";
     }
 
+    // Remove from UI list
     ui_mainCatListWidget->takeItem( ui_mainCatListWidget->currentRow() );
 
     // Disable subcategory buttons
     if ( ui_mainCatListWidget->count() <= 0 )
+    {
+        ui_subCatListWidget->clear();
         ui_subCatButtonLayout->setEnabled( false );
+    }
 }
 
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_mainCatListWidget_doubleClicked()
 {
     // Set as editable
@@ -123,10 +134,11 @@ void MainWindow::on_mainCatListWidget_doubleClicked()
 }
 
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_mainCatListWidget_itemChanged( QListWidgetItem *item )
 {
     // Adjust name of corresponding entry in app_data
-    CategoryData *catData = m_appStateData->listCategories->at( item->data( Qt::UserRole).toInt() );
+    CategoryData *catData = m_appStateData->listCategories->value( item->data( Qt::UserRole ).toInt() );
 
     // Check against old name
     QString oldName = catData->name;
@@ -147,6 +159,7 @@ void MainWindow::on_mainCatListWidget_itemChanged( QListWidgetItem *item )
 }
 
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_mainCatListWidget_currentItemChanged( QListWidgetItem *current )
 {
     if ( !current )
@@ -154,10 +167,10 @@ void MainWindow::on_mainCatListWidget_currentItemChanged( QListWidgetItem *curre
 
     // Update subcategory list
     ui_subCatListWidget->clear();
-    CategoryData *catData = m_appStateData->listCategories->at( current->data( Qt::UserRole ).toInt() );
-    QList<QVariant> *subcats = m_appStateData->listCategories->at( current->data( Qt::UserRole ).toInt() )->subcategories;
+    CategoryData    *catData = m_appStateData->listCategories->value( current->data( Qt::UserRole ).toInt() );
+    QList<QVariant> *subcats = m_appStateData->listCategories->value( current->data( Qt::UserRole ).toInt() )->subcategories;
 
-    qDebug() << "on_mainCatListWidget_currentItemChanged:" << catData->name;
+    qDebug() << "on_mainCatListWidget_currentItemChanged:" << catData->name << "-" << current->data( Qt::UserRole ).toInt();
 
     // Populate subcategory ui list
     for ( int i = 0; i < subcats->length(); i++ )
@@ -169,7 +182,8 @@ void MainWindow::on_mainCatListWidget_currentItemChanged( QListWidgetItem *curre
     }
 
     // Set current image's category
-    getCurrentImageData()->category = current->text();
+    if ( getCurrentImageData() )
+        getCurrentImageData()->category = current->text();
 
     // Enable subcategory buttons
     ui_subCatButtonLayout->setEnabled( true );
@@ -192,7 +206,7 @@ void MainWindow::on_subAddButton_clicked()
         qDebug() << "Adding new sub-category:" << text;
 
         // Append to subcategory list
-        QList<QVariant> *subcats = m_appStateData->listCategories->at( ui_mainCatListWidget->currentItem()->data( Qt::UserRole ).toInt() )->subcategories;
+        QList<QVariant> *subcats = m_appStateData->listCategories->value( ui_mainCatListWidget->currentItem()->data( Qt::UserRole ).toInt() )->subcategories;
         subcats->append( QVariant( text ) );
 
         // Add new ui list item
@@ -204,6 +218,7 @@ void MainWindow::on_subAddButton_clicked()
 }
 
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_subRemoveButton_clicked()
 {
     if ( ui_mainCatListWidget->currentRow() < 0 || ui_subCatListWidget->currentRow() < 0 )
@@ -216,10 +231,10 @@ void MainWindow::on_subRemoveButton_clicked()
         QString oldName = ui_subCatListWidget->currentItem()->text();
 
         // Remove from category data
-        QList<QVariant> *subcats = m_appStateData->listCategories->at( ui_mainCatListWidget->currentItem()->data( Qt::UserRole ).toInt() )->subcategories;
+        QList<QVariant> *subcats = m_appStateData->listCategories->value( ui_mainCatListWidget->currentItem()->data( Qt::UserRole ).toInt() )->subcategories;
         subcats->removeAt( subcats->indexOf( QVariant( ui_subCatListWidget->currentItem()->text() ) ) );
 
-        // Find all images with that subcategory and set to null
+        // Find all images with that subcategory and blank it
         for ( int i = 0; i < m_appStateData->listImageData->count(); i++ )
         {
             ImageData* imgData = m_appStateData->listImageData->at( i );
@@ -233,6 +248,7 @@ void MainWindow::on_subRemoveButton_clicked()
 }
 
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_subCatListWidget_doubleClicked()
 {
     // Set as editable
@@ -242,10 +258,11 @@ void MainWindow::on_subCatListWidget_doubleClicked()
 }
 
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_subCatListWidget_itemChanged( QListWidgetItem *item )
 {
     // Adjust name of corresponding entry in app_data
-    CategoryData *catData       = m_appStateData->listCategories->at( ui_mainCatListWidget->currentItem()->data( Qt::UserRole ).toInt() );
+    CategoryData *catData       = m_appStateData->listCategories->value( ui_mainCatListWidget->currentItem()->data( Qt::UserRole ).toInt() );
     QList<QVariant> *subcatList = catData->subcategories;
 
     // Check against old name
@@ -268,6 +285,7 @@ void MainWindow::on_subCatListWidget_itemChanged( QListWidgetItem *item )
 }
 
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_subCatListWidget_currentItemChanged( QListWidgetItem *current )
 {
     if ( !current )
@@ -280,9 +298,11 @@ void MainWindow::on_subCatListWidget_currentItemChanged( QListWidgetItem *curren
 }
 
 
+
 // MAIN FUNCTIONALITY
 //================================================================================================
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_addFilesButton_clicked()
 {
     qDebug() << "on_addFilesButton_clicked()";
@@ -325,6 +345,7 @@ void MainWindow::on_addFilesButton_clicked()
 }
 
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_fileListWidget_itemSelectionChanged()
 {
     ImageData *imgData = getCurrentImageData();
@@ -370,6 +391,7 @@ void MainWindow::on_fileListWidget_itemSelectionChanged()
 }
 
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_saveButton_clicked()
 {
     qDebug() << "on_saveButton_clicked()";
@@ -377,6 +399,7 @@ void MainWindow::on_saveButton_clicked()
 }
 
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_saveAsButton_clicked()
 {
     qDebug() << "on_saveAsButton_clicked()";
@@ -395,38 +418,7 @@ void MainWindow::on_saveAsButton_clicked()
 }
 
 
-void MainWindow::serializeAndSaveJsonFile( const QString path )
-{
-    qDebug() << "serializeAndSaveJsonFile() -" << path;
-
-    // Serialize category data
-    QJsonArray categoryJsonArray;
-    for ( int i = 0; i < m_appStateData->listCategories->count(); i++ )
-        categoryJsonArray.append( m_appStateData->listCategories->at( i )->serializeToJson() );
-
-    // Serialize image data
-    QJsonArray imageJsonArray;
-    for ( int i = 0; i < m_appStateData->listImageData->count(); i++ )
-        imageJsonArray.append( m_appStateData->listImageData->at( i )->serializeToJson() );
-
-    // Put everything into a QJsonDocument
-    QJsonObject metafileObj;
-    metafileObj["categories"] = categoryJsonArray;
-    metafileObj["images"] = imageJsonArray;
-    QJsonDocument jsonDoc = QJsonDocument( metafileObj );
-
-    // Write file
-    QFile file;
-    file.setFileName( path );
-    file.open( QIODevice::WriteOnly | QIODevice::Text );
-    file.write( jsonDoc.toJson() );
-
-    // Save for later
-    m_lastOpenMetafile = file.fileName();
-    saveSettings();
-}
-
-
+//--------------------------------------------------------------------------------------
 void MainWindow::on_loadButton_clicked()
 {
     qDebug() << "on_loadButton_clicked()";
@@ -445,6 +437,44 @@ void MainWindow::on_loadButton_clicked()
 }
 
 
+//--------------------------------------------------------------------------------------
+void MainWindow::serializeAndSaveJsonFile( const QString path )
+{
+    // Serialize category data
+    QJsonArray categoryJsonArray;
+    QMap<int, CategoryData*>::const_iterator iter = m_appStateData->listCategories->constBegin();
+    while ( iter != m_appStateData->listCategories->constEnd() )
+    {
+        categoryJsonArray.append( iter.value()->serializeToJson() );
+        iter++;
+    }
+
+    // Serialize image data
+    QJsonArray imageJsonArray;
+    for ( int i = 0; i < m_appStateData->listImageData->count(); i++ )
+        imageJsonArray.append( m_appStateData->listImageData->at( i )->serializeToJson() );
+
+    // Put everything into a QJsonDocument
+    QJsonObject metafileObj;
+    metafileObj["categories"] = categoryJsonArray;
+    metafileObj["images"] = imageJsonArray;
+    QJsonDocument jsonDoc = QJsonDocument( metafileObj );
+
+    // Write file
+    QFile file;
+    file.setFileName( path );
+    file.open( QIODevice::WriteOnly | QIODevice::Text );
+    file.write( jsonDoc.toJson() );
+
+    qDebug() << "serializeAndSaveJsonFile() -" << path;
+
+    // Save for later
+    m_lastOpenMetafile = file.fileName();
+    saveSettings();
+}
+
+
+//--------------------------------------------------------------------------------------
 void MainWindow::loadAndParseJsonFile( const QString path )
 {
     qDebug() << "loadAndParseJsonFile() -" << path;
@@ -461,10 +491,13 @@ void MainWindow::loadAndParseJsonFile( const QString path )
     file.close();
 
     // Get jsonObject out of jsonDoc
-    QJsonDocument jsonDoc = QJsonDocument::fromJson( jsonFromFile.toUtf8() );
+    QJsonDocument jsonDoc    = QJsonDocument::fromJson( jsonFromFile.toUtf8() );
     QJsonObject   jsonObject = jsonDoc.object();
 
     // Clear old app data
+    ui_mainCatListWidget->clear();
+    ui_subCatListWidget->clear();
+    ui_fileListWidget->clear();
     m_appStateData->listCategories->clear();
     m_appStateData->listImageData->clear();
 
@@ -482,12 +515,12 @@ void MainWindow::loadAndParseJsonFile( const QString path )
         newCategoryData->subcategories = subcats;
 
         // Add to app data
-        m_appStateData->listCategories->append( newCategoryData );
+        m_appStateData->listCategories->insert( i, newCategoryData ); //m_appStateData->listCategories->count(), newCategoryData );
 
         // Add categories to ui main category list
         QListWidgetItem *newItem = new QListWidgetItem();
         newItem->setText( categoryObj["name"].toString() );
-        newItem->setData( Qt::UserRole, m_appStateData->listCategories->count() - 1 );
+        newItem->setData( Qt::UserRole, i );//m_appStateData->listCategories->count() - 1 );
         ui_mainCatListWidget->addItem( newItem );
     }
 
@@ -528,6 +561,7 @@ void MainWindow::loadAndParseJsonFile( const QString path )
 }
 
 
+//--------------------------------------------------------------------------------------
 void MainWindow::saveSettings()
 {
     qDebug() << "saveSettings()";
@@ -536,33 +570,34 @@ void MainWindow::saveSettings()
 }
 
 
-void MainWindow::on_nameLineEdit_textChanged()              { getCurrentImageData()->name           = ui_nameLineEdit->text(); }
-void MainWindow::on_colorComboBox_currentIndexChanged()     { getCurrentImageData()->color          = ui_colorComboBox->currentText(); }
-void MainWindow::on_yearComboBox_currentIndexChanged()      { getCurrentImageData()->year           = ui_yearComboBox->currentText(); }
-void MainWindow::on_brokenCheckBox_toggled(bool checked)    { getCurrentImageData()->broken         = checked; }
-void MainWindow::on_missingCheckBox_toggled(bool checked)   { getCurrentImageData()->missingParts   = checked; }
-void MainWindow::on_batteriesCheckBox_toggled(bool checked) { getCurrentImageData()->batteries      = checked; }
+//--------------------------------------------------------------------------------------
+void MainWindow::on_nameLineEdit_textChanged()              { if ( getCurrentImageData() ) getCurrentImageData()->name           = ui_nameLineEdit->text(); }
+void MainWindow::on_colorComboBox_currentIndexChanged()     { if ( getCurrentImageData() ) getCurrentImageData()->color          = ui_colorComboBox->currentText(); }
+void MainWindow::on_yearComboBox_currentIndexChanged()      { if ( getCurrentImageData() ) getCurrentImageData()->year           = ui_yearComboBox->currentText(); }
+void MainWindow::on_brokenCheckBox_toggled(bool checked)    { if ( getCurrentImageData() ) getCurrentImageData()->broken         = checked; }
+void MainWindow::on_missingCheckBox_toggled(bool checked)   { if ( getCurrentImageData() ) getCurrentImageData()->missingParts   = checked; }
+void MainWindow::on_batteriesCheckBox_toggled(bool checked) { if ( getCurrentImageData() ) getCurrentImageData()->batteries      = checked; }
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_sizeSlider_valueChanged( int value )
 {
     switch ( value )
     {
-        case 0:
-            ui_sizeLabel->setText( tr( "Small" ) );
-            break;
-        case 1:
-            ui_sizeLabel->setText( tr( "Medium" ) );
-            break;
-        case 2:
-            ui_sizeLabel->setText( tr( "Large" ) );
-            break;
+        case 0: ui_sizeLabel->setText( tr( "Small" ) );     break;
+        case 1: ui_sizeLabel->setText( tr( "Medium" ) );    break;
+        case 2: ui_sizeLabel->setText( tr( "Large" ) );     break;
     }
 
-    getCurrentImageData()->size = value;
+    if ( getCurrentImageData() )
+        getCurrentImageData()->size = value;
 }
 
 
+//--------------------------------------------------------------------------------------
 ImageData* MainWindow::getCurrentImageData()
 {
+    if ( !ui_fileListWidget->currentItem() )
+        return NULL;
+
     return m_appStateData->listImageData->at( ui_fileListWidget->currentItem()->data( Qt::UserRole ).toInt() );
 }

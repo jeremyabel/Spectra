@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QList>
+#include <QMap>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QVariant>
@@ -42,12 +43,12 @@ class AppStateData : public QObject
 public:
     explicit AppStateData(QObject *parent = 0);
 
-    QJsonObject           serializeToJson();
-    const CategoryData*   getCategoryByName(  const QString name );
-    const ImageData*      getImageDataByName( const QString name );
+    QJsonObject                 serializeToJson();
+    const CategoryData*         getCategoryByName(  const QString name );
+    const ImageData*            getImageDataByName( const QString name );
 
-    QList<CategoryData*> *listCategories;
-    QList<ImageData*>    *listImageData;
+    QMap<int, CategoryData*>    *listCategories;
+    QList<ImageData*>           *listImageData;
 
 signals:
 

@@ -37,7 +37,7 @@ QJsonObject AppStateData::serializeToJson()
 
 AppStateData::AppStateData(QObject *parent) : QObject( parent )
 {
-    listCategories = new QList<CategoryData*>();
+    listCategories = new QMap<int, CategoryData*>();
     listImageData  = new QList<ImageData*>();
 }
 
@@ -45,8 +45,8 @@ const CategoryData* AppStateData::getCategoryByName( const QString name )
 {
     for ( int i = 0; i < listCategories->count(); i++ )
     {
-        if ( listCategories->at( i )->name == name )
-            return listCategories->at( i );
+        if ( listCategories->value( i )->name == name )
+            return listCategories->value( i );
     }
 
     return new CategoryData();
