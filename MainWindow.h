@@ -37,6 +37,7 @@ public:
     explicit MainWindow( QWidget *parent = 0 );
     ~MainWindow();
 
+    void keyPressEvent( QKeyEvent *event );
 
 private slots:
 

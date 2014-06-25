@@ -64,6 +64,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 // MAIN CATEGORY LIST
 //================================================================================================
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_mainAddButton_clicked()
 {
     bool ok;
@@ -98,9 +99,8 @@ void MainWindow::on_mainRemoveButton_clicked()
 
     qDebug() << "on_mainRemoveButton_clicked():" << ui_mainCatListWidget->currentIndex().row();
 
-    QString removedCategory = ui_mainCatListWidget->currentItem()->text();
-
     // Remove from app data
+    QString removedCategory = ui_mainCatListWidget->currentItem()->text();
     QListWidgetItem* removedItem = ui_mainCatListWidget->currentItem();
     m_appStateData->listCategories->remove( removedItem->data( Qt::UserRole ).toInt() );
 
@@ -193,6 +193,7 @@ void MainWindow::on_mainCatListWidget_currentItemChanged( QListWidgetItem *curre
 // SUB-CATEGORY LIST
 //================================================================================================
 
+//--------------------------------------------------------------------------------------
 void MainWindow::on_subAddButton_clicked()
 {
     if ( ui_mainCatListWidget->currentRow() < 0 )
@@ -303,6 +304,40 @@ void MainWindow::on_subCatListWidget_currentItemChanged( QListWidgetItem *curren
 //================================================================================================
 
 //--------------------------------------------------------------------------------------
+void MainWindow::keyPressEvent( QKeyEvent *event )
+{
+    // Deal with delete keypress depending on what has focus
+    if ( event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace )
+    {
+        QWidget* focusWidget = QApplication::focusWidget();
+
+        // Main category list
+        if ( focusWidget == ui_mainCatListWidget )
+        {
+            on_mainRemoveButton_clicked();
+            return;
+        }
+
+        // Sub-category list
+        if ( focusWidget == ui_subCatListWidget )
+        {
+            on_subRemoveButton_clicked();
+            return;
+        }
+
+        // File list
+        if ( focusWidget == ui_fileListWidget )
+        {
+            if ( ui_fileListWidget->count() <= 0 )
+                return;
+
+            // Remove from UI list
+            ui_fileListWidget->takeItem( ui_fileListWidget->currentRow() );
+        }
+    }
+}
+
+//--------------------------------------------------------------------------------------
 void MainWindow::on_addFilesButton_clicked()
 {
     qDebug() << "on_addFilesButton_clicked()";
@@ -349,6 +384,22 @@ void MainWindow::on_addFilesButton_clicked()
 void MainWindow::on_fileListWidget_itemSelectionChanged()
 {
     ImageData *imgData = getCurrentImageData();
+
+    // Reset if no image is found
+    if ( !imgData )
+    {
+        ui_mainCatListWidget->setCurrentRow( -1 );
+        ui_subCatListWidget->setCurrentRow( -1 );
+        ui_yearComboBox->setCurrentIndex(   ui_yearComboBox->findText("1980") );
+        ui_colorComboBox->setCurrentIndex(  ui_colorComboBox->findText("Red") );
+        ui_nameLineEdit->setText(           tr("") );
+        ui_sizeSlider->setValue(            1 );
+        ui_brokenCheckBox->setChecked(      false );
+        ui_missingCheckBox->setChecked(     false );
+        ui_batteriesCheckBox->setChecked(   false );
+        ui_imagePreview->clear();
+        return;
+    }
 
     // Find and set category
     QList<QListWidgetItem *> itemCategories = ui_mainCatListWidget->findItems( imgData->category, Qt::MatchExactly );
@@ -577,6 +628,7 @@ void MainWindow::on_yearComboBox_currentIndexChanged()      { if ( getCurrentIma
 void MainWindow::on_brokenCheckBox_toggled(bool checked)    { if ( getCurrentImageData() ) getCurrentImageData()->broken         = checked; }
 void MainWindow::on_missingCheckBox_toggled(bool checked)   { if ( getCurrentImageData() ) getCurrentImageData()->missingParts   = checked; }
 void MainWindow::on_batteriesCheckBox_toggled(bool checked) { if ( getCurrentImageData() ) getCurrentImageData()->batteries      = checked; }
+
 
 //--------------------------------------------------------------------------------------
 void MainWindow::on_sizeSlider_valueChanged( int value )
