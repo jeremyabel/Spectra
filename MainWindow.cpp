@@ -11,6 +11,7 @@
 #include <QtGui>
 #include <QDir>
 #include <QSettings>
+#include <QShortcut>
 
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
@@ -40,6 +41,18 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     ui_saveAsButton         = findChild<QPushButton*>( "saveAsButton" );
 
     ui_saveButton->setEnabled( false );
+
+    // Shortcut - Save
+    QShortcut *saveShortcut = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_S), this);
+    QObject::connect( saveShortcut, SIGNAL( activated() ), this, SLOT(on_saveButton_clicked()) );
+
+    // Shortcut - Save As
+    QShortcut *saveAsShortcut = new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_S), this);
+    QObject::connect( saveAsShortcut, SIGNAL( activated() ), this, SLOT(on_saveAsButton_clicked()) );
+
+    // Shortcut - Load
+    QShortcut *openShortcut = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_O), this);
+    QObject::connect( openShortcut, SIGNAL( activated() ), this, SLOT(on_loadButton_clicked()) );
 
     // Add years to combo box
     const int startingYear = 1960;
