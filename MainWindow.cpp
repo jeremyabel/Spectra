@@ -25,8 +25,8 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 
     // Get children we'll need
     ui_imagePreview         = findChild<QLabel*>( "pixmapLabel" );
+    ui_pathLabel            = findChild<QLabel*>( "pathLabel" );
     ui_sizeLabel            = findChild<QLabel*>( "sizeSelectedLabel" );
-    ui_nameLineEdit         = findChild<QLineEdit*>( "nameLineEdit" );
     ui_mainCatListWidget    = findChild<QListWidget*>( "mainCatListWidget" );
     ui_subCatListWidget     = findChild<QListWidget*>( "subCatListWidget" );
     ui_subCatButtonLayout   = findChild<QFrame*>( "subCatButtonLayout_2" );
@@ -41,6 +41,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     ui_saveAsButton         = findChild<QPushButton*>( "saveAsButton" );
 
     ui_saveButton->setEnabled( false );
+    ui_pathLabel->setText("");
 
     // Shortcut - Save
     QShortcut *saveShortcut = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_S), this);
@@ -370,11 +371,10 @@ void MainWindow::on_addFilesButton_clicked()
         {
             // Get file name and path
             QFileInfo *fileInfo = new QFileInfo( fileNames.at( i ) );
-            QListWidgetItem *newItem = new QListWidgetItem( fileInfo->fileName(), ui_fileListWidget );
+            QListWidgetItem *newItem = new QListWidgetItem( fileInfo->path(), ui_fileListWidget );
 
             // Create stock image data
             ImageData *newImageData = new ImageData();
-            newImageData->name         = fileInfo->fileName();
             newImageData->path         = fileNames.at(i);
             newImageData->category     = tr( "" );
             newImageData->subCategory  = tr( "" );
@@ -401,11 +401,11 @@ void MainWindow::on_fileListWidget_itemSelectionChanged()
     // Reset if no image is found
     if ( !imgData )
     {
+        ui_pathLabel->setText( tr("") );
         ui_mainCatListWidget->setCurrentRow( -1 );
         ui_subCatListWidget->setCurrentRow( -1 );
         ui_yearComboBox->setCurrentIndex(   ui_yearComboBox->findText("1980") );
         ui_colorComboBox->setCurrentIndex(  ui_colorComboBox->findText("Red") );
-        ui_nameLineEdit->setText(           tr("") );
         ui_sizeSlider->setValue(            1 );
         ui_brokenCheckBox->setChecked(      false );
         ui_missingCheckBox->setChecked(     false );
@@ -442,9 +442,9 @@ void MainWindow::on_fileListWidget_itemSelectionChanged()
     }
 
     // Parse into the rest of the ui
+    ui_pathLabel->setText(              "Path: " + imgData->path);
     ui_yearComboBox->setCurrentIndex( ui_yearComboBox->findText( imgData->year ) );
     ui_colorComboBox->setCurrentIndex( ui_colorComboBox->findText( imgData->color ) );
-    ui_nameLineEdit->setText(           imgData->name );
     ui_sizeSlider->setValue(            imgData->size );
     ui_brokenCheckBox->setChecked(      imgData->broken );
     ui_missingCheckBox->setChecked(     imgData->missingParts );
@@ -595,7 +595,6 @@ void MainWindow::loadAndParseJsonFile( const QString path )
         QJsonObject imageObj = imagesArray.at( i ).toObject();
         ImageData *newImageData = new ImageData();
 
-        newImageData->name          = imageObj.value( "name" ).toString();
         newImageData->path          = imageObj.value( "path" ).toString();
         newImageData->category      = imageObj.value( "category" ).toString();
         newImageData->subCategory   = imageObj.value( "subcategory" ).toString();
@@ -611,7 +610,7 @@ void MainWindow::loadAndParseJsonFile( const QString path )
 
         // Add to file list ui
         QListWidgetItem *newItem = new QListWidgetItem();
-        newItem->setText( newImageData->name );
+        newItem->setText( newImageData->path );
         newItem->setData( Qt::UserRole, m_appStateData->listImageData->count() - 1);
         ui_fileListWidget->addItem( newItem );
     }
@@ -635,7 +634,6 @@ void MainWindow::saveSettings()
 
 
 //--------------------------------------------------------------------------------------
-void MainWindow::on_nameLineEdit_textChanged()              { if ( getCurrentImageData() ) getCurrentImageData()->name           = ui_nameLineEdit->text(); }
 void MainWindow::on_colorComboBox_currentIndexChanged()     { if ( getCurrentImageData() ) getCurrentImageData()->color          = ui_colorComboBox->currentText(); }
 void MainWindow::on_yearComboBox_currentIndexChanged()      { if ( getCurrentImageData() ) getCurrentImageData()->year           = ui_yearComboBox->currentText(); }
 void MainWindow::on_brokenCheckBox_toggled(bool checked)    { if ( getCurrentImageData() ) getCurrentImageData()->broken         = checked; }

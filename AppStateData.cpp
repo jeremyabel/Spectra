@@ -17,7 +17,6 @@ QJsonObject CategoryData::serializeToJson()
 QJsonObject ImageData::serializeToJson()
 {
     QJsonObject jsonObj;
-    jsonObj["name"] = name;
     jsonObj["path"] = path;
     jsonObj["category"] = category;
     jsonObj["subcategory"] = subCategory;

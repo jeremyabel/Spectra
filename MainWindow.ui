@@ -105,25 +105,19 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>4</height>
+           <height>2</height>
           </size>
          </property>
         </spacer>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="nameLayout">
+        <layout class="QHBoxLayout" name="pathLayout">
          <item>
-          <widget class="QLabel" name="nameLabel">
+          <widget class="QLabel" name="pathLabel">
            <property name="text">
-            <string>Name:</string>
-           </property>
-           <property name="buddy">
-            <cstring>nameLineEdit</cstring>
+            <string>Path:</string>
            </property>
           </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="nameLineEdit"/>
          </item>
         </layout>
        </item>
@@ -138,7 +132,7 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>5</height>
+           <height>2</height>
           </size>
          </property>
         </spacer>
@@ -883,7 +877,6 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
-  <tabstop>nameLineEdit</tabstop>
   <tabstop>mainCatListWidget</tabstop>
   <tabstop>mainAddButton</tabstop>
   <tabstop>mainRemoveButton</tabstop>

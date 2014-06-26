@@ -58,33 +58,27 @@ private slots:
     void on_loadButton_clicked();
 
     void on_addFilesButton_clicked();
-
     void on_fileListWidget_itemSelectionChanged();
-
-    // //////////////////////////////////////////////////////////////////////////
-
-    void on_nameLineEdit_textChanged();
 
     void on_colorComboBox_currentIndexChanged();
     void on_yearComboBox_currentIndexChanged();
     void on_sizeSlider_valueChanged( int value );
-
     void on_brokenCheckBox_toggled(bool checked);
     void on_missingCheckBox_toggled(bool checked);
     void on_batteriesCheckBox_toggled(bool checked);
 
 private:
 
-    void        loadAndParseJsonFile( const QString path );
-    void        serializeAndSaveJsonFile( const QString path );
-    void        saveSettings();
-    ImageData*  getCurrentImageData();
+    void            loadAndParseJsonFile( const QString path );
+    void            serializeAndSaveJsonFile( const QString path );
+    void            saveSettings();
+    ImageData*      getCurrentImageData();
 
     Ui::MainWindow  *ui;
     QLabel          *ui_imagePreview;
+    QLabel          *ui_pathLabel;
     QGraphicsScene  *ui_graphicsScene;
     QLabel          *ui_sizeLabel;
-    QLineEdit       *ui_nameLineEdit;
     QListWidget     *ui_mainCatListWidget;
     QListWidget     *ui_subCatListWidget;
     QFrame          *ui_subCatButtonLayout;
